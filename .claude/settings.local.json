@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Read(//usr/local/bin/**)",
+      "Read(//Users/aabcarians/.nvm/versions/**)",
+      "Bash(export NVM_DIR=\"$HOME/.nvm\")",
+      "Bash(source \"$NVM_DIR/nvm.sh\")",
+      "Bash(nvm use:*)",
+      "Bash(npm --version)",
+      "Bash(rmdir /Users/aabcarians/Projects/Claude/art-directory/digital-disk)",
+      "Bash(npm install:*)",
+      "Bash(npx astro:*)",
+      "Bash(npm run:*)",
+      "Bash(netlify status:*)",
+      "Bash(netlify deploy:*)",
+      "Bash(netlify sites:list)",
+      "Bash(git init:*)",
+      "Bash(git remote:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(ssh -T git@github.com)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(gh auth:*)",
+      "Bash(source ~/.zshrc)",
+      "Bash(/opt/homebrew/bin/gh auth:*)"
+    ]
+  }
+}
