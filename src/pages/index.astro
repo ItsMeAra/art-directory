@@ -1,0 +1,59 @@
+---
+import { getCollection } from 'astro:content';
+import { CATEGORIES } from '../lib/categories';
+import DirectoryApp from '../components/DirectoryApp';
+import '../styles/global.css';
+
+const rawListings = await getCollection('listings');
+
+const listings = rawListings
+  .sort((a, b) => {
+    if (a.data.featured !== b.data.featured) return a.data.featured ? -1 : 1;
+    return a.data.name.localeCompare(b.data.name);
+  })
+  .map(entry => ({
+    id:          entry.id,
+    name:        entry.data.name,
+    category:    entry.data.category,
+    tags:        entry.data.tags,
+    url:         entry.data.url,
+    description: entry.data.description,
+    location:    entry.data.location,
+    featured:    entry.data.featured,
+  }));
+
+const categoryCounts = Object.fromEntries(
+  CATEGORIES.map(cat => [cat.value, listings.filter(l => l.category === cat.value).length])
+);
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content="A curated directory of places to buy art and designer toys — galleries, stores, online marketplaces, artist shops, and more." />
+    <title>Art & Toy Directory</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body class="bg-gray-50 min-h-screen font-sans text-gray-900 antialiased">
+    <header class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-4">
+        <a href="/" class="flex items-center gap-2 shrink-0">
+          <span class="text-xl">🎨</span>
+          <span class="font-bold text-lg text-gray-900 leading-none">Art & Toy Directory</span>
+        </a>
+      </div>
+    </header>
+
+    <DirectoryApp
+      client:load
+      listings={listings}
+      categories={CATEGORIES}
+      categoryCounts={categoryCounts}
+    />
+  </body>
+</html>
