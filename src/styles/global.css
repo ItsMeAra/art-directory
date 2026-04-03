@@ -9,6 +9,11 @@
   html.dark {
     color-scheme: dark;
   }
+  /* Snappier taps on mobile (avoids double-tap-to-zoom delay on interactive elements). */
+  a[href],
+  button {
+    touch-action: manipulation;
+  }
 }
 
 @theme {
