@@ -20,7 +20,7 @@ export const WHO_MADE_THIS = {
   heading: 'Who made this?',
   /** First-person blurb — edit anytime in this file. */
   paragraphs: [
-    'I’m Ara (Art Collector WTF online). I collect art in many forms—prints, designer toys, sofubi, and whatever else grabs me. I co-host “Technically” Toy Talk on YouTube, write a bit about the hobby. I createdHunt & Haul because I wanted a single place to log all if the places to shop and discover art and toys.',
+    'I’m Ara (Art Collector WTF online). I collect art in many forms—prints, designer toys, sofubi, and whatever else grabs me. I co-host “Technically” Toy Talk on YouTube, write a bit about the hobby. I created Hunt & Haul because I wanted a single place to log all if the places to shop and discover art and toys.',
     'If you want more of my day-to-day collecting, shows, and links, everything lives in one place:',
   ] as const,
   linkLabel: 'Linktree — @artcollectorwtf',

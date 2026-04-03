@@ -6,5 +6,5 @@ export const HOME_META_DESCRIPTION =
 export const HOME_HERO = {
   title:   'Hunt & Haul',
   tagline:
-    'A curated list of places to hunt for art and designer toys. Stack your latest haul.',
+    'A curated list of places to hunt for art and designer toys. Get haulin\'.',
 } as const;
