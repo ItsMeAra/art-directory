@@ -24,11 +24,13 @@ const {
 const submitBtn =
   'inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:focus:ring-violet-400 dark:focus:ring-offset-zinc-900';
 
-const backLink =
-  'inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:focus:ring-violet-400 dark:focus:ring-offset-zinc-900';
-
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
-const onSubmitPage = path === '/submit';
+
+const navMuted =
+  'text-sm font-medium text-gray-600 dark:text-zinc-400 hover:text-violet-600 dark:hover:text-violet-400 shrink-0';
+
+const footerLink =
+  'text-sm font-medium text-gray-600 dark:text-zinc-400 hover:text-violet-600 dark:hover:text-violet-400';
 
 const canonicalHref =
   Astro.site != null ? new URL(Astro.url.pathname, Astro.site).href : null;
@@ -99,19 +101,22 @@ const canonicalHref =
           <span class="text-xl">🎨</span>
           <span class="font-bold text-lg text-gray-900 dark:text-zinc-100 leading-none truncate">Hunt & Haul</span>
         </a>
-        <div class="flex items-center shrink-0">
-          {
-            onSubmitPage ? (
-              <a href="/" class={backLink}>
-                ← Back to listings
-              </a>
-            ) : (
-              <a href="/submit" class={submitBtn}>
-                Submit a listing
-              </a>
-            )
-          }
-        </div>
+        <nav
+          class="flex items-center justify-end gap-2 sm:gap-3 shrink-0 min-w-0"
+          aria-label="Primary"
+        >
+          <a
+            href="/about"
+            class={navMuted}
+            aria-current={path === '/about' ? 'page' : undefined}
+          >
+            About
+          </a>
+          <a href="/submit" class={submitBtn} aria-current={path === '/submit' ? 'page' : undefined}>
+            <span class="hidden sm:inline">Submit a listing</span>
+            <span class="sm:hidden">Submit</span>
+          </a>
+        </nav>
       </div>
     </header>
 
@@ -128,22 +133,30 @@ const canonicalHref =
       transition:persist
       class="shrink-0 border-t border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900"
     >
-      <div class="w-full mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-        <div class="text-sm text-gray-600 dark:text-zinc-400 max-w-md">
-          <p class="font-medium text-gray-900 dark:text-zinc-100">Hunt & Haul</p>
-          <p class="mt-1">
-            Curated spots to find art, designer toys, sofubi, and more to feed your obsession. Listings live in the{' '}
-            <a
-              href={githubRepoBase}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-violet-600 dark:text-violet-400 hover:underline font-medium"
-            >
-              project repo on GitHub
-            </a>
-            .
-          </p>
-        </div>
+      <div class="w-full mx-auto px-4 sm:px-6 py-8 flex flex-col items-center text-center gap-5">
+        <nav class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2" aria-label="Footer">
+          <a href="/" class={footerLink} aria-current={path === '/' ? 'page' : undefined}>
+            Home
+          </a>
+          <a href="/about" class={footerLink} aria-current={path === '/about' ? 'page' : undefined}>
+            About
+          </a>
+          <a href="/submit" class={footerLink} aria-current={path === '/submit' ? 'page' : undefined}>
+            Submit a listing
+          </a>
+        </nav>
+        <p class="text-sm text-gray-500 dark:text-zinc-500 max-w-lg">
+          © {new Date().getFullYear()} Hunt & Haul. All rights reserved.{' '}
+          <a
+            href={githubRepoBase}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-violet-600 dark:text-violet-400 hover:underline font-medium whitespace-nowrap"
+          >
+            Source on GitHub
+          </a>
+          .
+        </p>
         <ThemeSwitcher client:load />
       </div>
     </footer>

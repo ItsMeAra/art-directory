@@ -51,7 +51,8 @@ export default function ThemeSwitcher() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-2 sm:items-end">
+    <div className="flex flex-col gap-2 pt-2">
+      <hr className="border-gray-200 dark:border-zinc-600 mb-2" />
       <p id={labelId} className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">
         Appearance
       </p>

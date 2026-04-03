@@ -2,6 +2,11 @@ import type { Listing } from '../types/listing';
 
 const SITE_NAME = 'Hunt & Haul';
 
+export interface FaqEntry {
+  question: string;
+  answer: string;
+}
+
 /** Avoid breaking out of `<script type="application/ld+json">` if content contains `</script>`. */
 export function jsonLdToScriptContent(data: object): string {
   return JSON.stringify(data).replace(/</g, '\\u003c');
@@ -96,22 +101,117 @@ export function buildHomeJsonLd(
   };
 }
 
-/** Submit page: WebPage connected to the site graph. */
-export function buildSubmitPageJsonLd(site: URL, pageDescription: string): object {
+function faqMainEntity(faq: readonly FaqEntry[]) {
+  return faq.map(q => ({
+    '@type':        'Question',
+    name:           q.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text:    q.answer,
+    },
+  }));
+}
+
+/** /about — AboutPage + Person + FAQPage + breadcrumbs (FAQ copy must match on-page content). */
+export function buildAboutPageJsonLd(
+  site: URL,
+  pageTitle: string,
+  pageDescription: string,
+  faq: readonly FaqEntry[],
+  authorImageAbsoluteUrl: string,
+  creator: { name: string; sameAs: string },
+): object {
   const origin = site.origin.replace(/\/$/, '');
-  const pageUrl = `${origin}/submit/`;
+  const homeUrl = `${origin}/`;
+  const pageUrl = `${origin}/about/`;
+  const breadcrumbId = `${pageUrl}#breadcrumb`;
+  const creatorId = `${pageUrl}#creator`;
 
   return {
     '@context': 'https://schema.org',
     '@graph':   [
       {
-        '@type':     'WebPage',
-        '@id':       `${pageUrl}#webpage`,
+        '@type':         'BreadcrumbList',
+        '@id':           breadcrumbId,
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: SITE_NAME, item: homeUrl },
+          { '@type': 'ListItem', position: 2, name: 'About', item: pageUrl },
+        ],
+      },
+      {
+        '@type':     'Person',
+        '@id':       creatorId,
+        name:        creator.name,
+        url:         creator.sameAs,
+        sameAs:      [creator.sameAs],
+        image:       authorImageAbsoluteUrl,
+      },
+      {
+        '@type':               'AboutPage',
+        '@id':                 `${pageUrl}#webpage`,
+        url:                   pageUrl,
+        name:                  pageTitle,
+        description:           pageDescription,
+        isPartOf:              { '@id': `${origin}/#website` },
+        breadcrumb:            { '@id': breadcrumbId },
+        author:                { '@id': creatorId },
+        inLanguage:            'en-US',
+        primaryImageOfPage:    {
+          '@type': 'ImageObject',
+          url:     authorImageAbsoluteUrl,
+        },
+      },
+      {
+        '@type':     'FAQPage',
+        '@id':       `${pageUrl}#faqpage`,
         url:         pageUrl,
-        name:        `Submit a listing — ${SITE_NAME}`,
+        name:        `${pageTitle} — FAQ`,
         description: pageDescription,
         isPartOf:    { '@id': `${origin}/#website` },
-        inLanguage:  'en-US',
+        mainEntity:  faqMainEntity(faq),
+      },
+    ],
+  };
+}
+
+/** Submit page: WebPage + BreadcrumbList (matches visible breadcrumbs). */
+export function buildSubmitPageJsonLd(site: URL, pageDescription: string): object {
+  const origin = site.origin.replace(/\/$/, '');
+  const homeUrl = `${origin}/`;
+  const pageUrl = `${origin}/submit/`;
+
+  const breadcrumbId = `${pageUrl}#breadcrumb`;
+
+  return {
+    '@context': 'https://schema.org',
+    '@graph':   [
+      {
+        '@type':       'BreadcrumbList',
+        '@id':         breadcrumbId,
+        itemListElement: [
+          {
+            '@type':    'ListItem',
+            position:   1,
+            name:       SITE_NAME,
+            item:       homeUrl,
+          },
+          {
+            '@type':    'ListItem',
+            position:   2,
+            name:       'Submit a listing',
+            item:       pageUrl,
+          },
+        ],
+      },
+      {
+        '@type':       'WebPage',
+        '@id':         `${pageUrl}#webpage`,
+        url:           pageUrl,
+        name:          `Submit a listing — ${SITE_NAME}`,
+        description:   pageDescription,
+        isPartOf:      { '@id': `${origin}/#website` },
+        breadcrumb:    { '@id': breadcrumbId },
+        inLanguage:    'en-US',
       },
     ],
   };

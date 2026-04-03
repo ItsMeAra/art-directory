@@ -3,13 +3,13 @@ import { getCollection } from 'astro:content';
 import { CATEGORIES } from '../lib/categories';
 import DirectoryApp from '../components/DirectoryApp';
 import SiteLayout from '../layouts/SiteLayout.astro';
+import { HOME_META_DESCRIPTION } from '../lib/home-content';
 import { buildHomeJsonLd, jsonLdToScriptContent } from '../lib/schema-org';
 
 const githubRepoBase =
   import.meta.env.PUBLIC_GITHUB_REPO_URL ?? 'https://github.com/ItsMeAra/art-directory';
 
-const pageDescription =
-  'Hunt & Haul — a curated list of galleries, shops, and marketplaces for art and designer toys.';
+const pageDescription = HOME_META_DESCRIPTION;
 
 const rawListings = await getCollection('listings');
 

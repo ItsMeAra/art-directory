@@ -3,6 +3,7 @@ import Fuse from 'fuse.js';
 import type { Listing } from '../types/listing';
 import type { CATEGORIES } from '../lib/categories';
 import { BADGE_CLASSES } from '../lib/categories';
+import { HOME_HERO } from '../lib/home-content';
 import ListingCard from './ListingCard';
 
 const POPULAR_TAG_LIMIT = 12;
@@ -265,6 +266,15 @@ export default function DirectoryApp({ listings, categories, categoryCounts }: D
       </aside>
 
       <main className="flex min-h-0 min-w-0 flex-1 flex-col py-6 px-4 sm:px-6 lg:px-8">
+        <header className="mb-5 rounded-xl border border-violet-200/70 dark:border-violet-800/50 bg-linear-to-br from-violet-50/90 via-white to-fuchsia-50/40 dark:from-violet-950/40 dark:via-zinc-900/80 dark:to-fuchsia-950/20 px-5 py-4 sm:px-6 sm:py-5 shadow-sm shadow-violet-900/5 dark:shadow-black/30">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-zinc-50 text-balance">
+            {HOME_HERO.title}
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm sm:text-base text-gray-600 dark:text-zinc-400 leading-relaxed text-pretty">
+            {HOME_HERO.tagline}
+          </p>
+        </header>
+
         <div className="mb-6 flex flex-wrap gap-3 items-center">
           <button
             type="button"

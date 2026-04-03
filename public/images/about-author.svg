@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" fill="none" role="img" aria-labelledby="ph-title">
+  <title id="ph-title">Photo placeholder  replace with your image at public/images/about-author.jpg</title>
+  <rect width="480" height="480" fill="#f4f4f5" rx="24"/>
+  <rect x="1" y="1" width="478" height="478" rx="23" stroke="#e4e4e7" stroke-width="2"/>
+  <circle cx="240" cy="200" r="72" fill="#d4d4d8"/>
+  <ellipse cx="240" cy="360" rx="120" ry="72" fill="#d4d4d8"/>
+  <text x="240" y="440" text-anchor="middle" fill="#71717a" font-family="system-ui,sans-serif" font-size="14">Your photo</text>
+</svg>

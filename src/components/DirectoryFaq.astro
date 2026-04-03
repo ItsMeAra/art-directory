@@ -1,0 +1,52 @@
+---
+import type { FaqEntry } from '../lib/schema-org';
+
+interface Props {
+  items: readonly FaqEntry[];
+  /** When false, section is plain (e.g. dedicated FAQ page with its own h1). */
+  showHeading?: boolean;
+  /** `muted` = self-contained band; `embed` = padding only (parent supplies background); `plain` = minimal padding. */
+  tone?: 'muted' | 'plain' | 'embed';
+}
+
+const { items, showHeading = true, tone = 'muted' } = Astro.props;
+
+const sectionClass =
+  tone === 'muted'
+    ? 'shrink-0 border-t border-gray-200 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/50'
+    : 'shrink-0';
+
+const innerClass =
+  tone === 'plain'
+    ? 'mx-auto max-w-3xl px-0 py-2'
+    : 'mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8';
+---
+
+<section
+  class={sectionClass}
+  aria-labelledby={showHeading ? 'directory-faq-heading' : undefined}
+  aria-label={showHeading ? undefined : 'Frequently asked questions'}
+>
+  <div class={innerClass}>
+    {
+      showHeading && (
+        <h2
+          id="directory-faq-heading"
+          class="text-lg font-semibold text-gray-900 dark:text-zinc-100"
+        >
+          Frequently asked questions
+        </h2>
+      )
+    }
+    <dl class={showHeading ? 'mt-6 space-y-6' : 'space-y-8'}>
+      {
+        items.map(({ question, answer }) => (
+          <div>
+            <dt class="text-sm font-medium text-gray-900 dark:text-zinc-100">{question}</dt>
+            <dd class="mt-2 text-sm text-gray-600 dark:text-zinc-400 leading-relaxed">{answer}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</section>
