@@ -4,7 +4,7 @@ category: gallery
 tags:
   - prints
   - gallery
-url: https://www.apportfolioshop.com
+url: https://artox.odoo.com
 description: >
   APPortfolio Online Shop
 featured: false
