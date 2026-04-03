@@ -3,9 +3,13 @@ import { getCollection } from 'astro:content';
 import { CATEGORIES } from '../lib/categories';
 import DirectoryApp from '../components/DirectoryApp';
 import SiteLayout from '../layouts/SiteLayout.astro';
+import { buildHomeJsonLd, jsonLdToScriptContent } from '../lib/schema-org';
 
 const githubRepoBase =
   import.meta.env.PUBLIC_GITHUB_REPO_URL ?? 'https://github.com/ItsMeAra/art-directory';
+
+const pageDescription =
+  'Hunt & Haul — a curated list of galleries, shops, and marketplaces for art and designer toys.';
 
 const rawListings = await getCollection('listings');
 
@@ -28,13 +32,27 @@ const listings = rawListings
 const categoryCounts = Object.fromEntries(
   CATEGORIES.map(cat => [cat.value, listings.filter(l => l.category === cat.value).length])
 );
+
+const homeJsonLd =
+  Astro.site != null
+    ? buildHomeJsonLd(Astro.site, listings, pageDescription, { sameAs: [githubRepoBase] })
+    : null;
 ---
 
 <SiteLayout
   title="Hunt & Haul"
+  description={pageDescription}
   githubRepoBase={githubRepoBase}
   includeNetlifyListingDetector={true}
 >
+  {homeJsonLd && (
+    <script
+      is:inline
+      type="application/ld+json"
+      slot="head"
+      set:html={jsonLdToScriptContent(homeJsonLd)}
+    />
+  )}
   <DirectoryApp
     client:load
     listings={listings}

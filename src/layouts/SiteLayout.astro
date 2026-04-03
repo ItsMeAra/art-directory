@@ -29,6 +29,9 @@ const backLink =
 
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 const onSubmitPage = path === '/submit';
+
+const canonicalHref =
+  Astro.site != null ? new URL(Astro.url.pathname, Astro.site).href : null;
 ---
 
 <html lang="en" transition:animate="none">
@@ -55,6 +58,8 @@ const onSubmitPage = path === '/submit';
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
     <title>{title}</title>
+    {canonicalHref && <link rel="canonical" href={canonicalHref} />}
+    <slot name="head" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />

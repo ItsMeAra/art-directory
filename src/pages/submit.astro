@@ -1,16 +1,31 @@
 ---
 import SiteLayout from '../layouts/SiteLayout.astro';
 import SubmitListingForm from '../components/SubmitListingForm';
+import { buildSubmitPageJsonLd, jsonLdToScriptContent } from '../lib/schema-org';
 
 const githubRepoBase =
   import.meta.env.PUBLIC_GITHUB_REPO_URL ?? 'https://github.com/ItsMeAra/art-directory';
+
+const pageDescription =
+  'Suggest a gallery, shop, marketplace, or other spot for art and designer toys.';
+
+const submitJsonLd =
+  Astro.site != null ? buildSubmitPageJsonLd(Astro.site, pageDescription) : null;
 ---
 
 <SiteLayout
   title="Submit a listing — Hunt & Haul"
-  description="Suggest a gallery, shop, marketplace, or other spot for art and designer toys."
+  description={pageDescription}
   githubRepoBase={githubRepoBase}
 >
+  {submitJsonLd && (
+    <script
+      is:inline
+      type="application/ld+json"
+      slot="head"
+      set:html={jsonLdToScriptContent(submitJsonLd)}
+    />
+  )}
   <div class="w-full max-w-lg mx-auto px-4 py-8 sm:px-6 lg:px-8">
     <h1 class="text-2xl font-bold text-gray-900 dark:text-zinc-100 tracking-tight">Submit a listing</h1>
     <p class="mt-2 text-sm text-gray-600 dark:text-zinc-400">
