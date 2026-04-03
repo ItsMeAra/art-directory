@@ -1,0 +1,5 @@
+# Hunt & Haul — https://huntandhaul.artcollector.wtf
+User-agent: *
+Allow: /
+
+Sitemap: https://huntandhaul.artcollector.wtf/sitemap-index.xml
