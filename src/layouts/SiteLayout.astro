@@ -62,6 +62,21 @@ const canonicalHref =
     <title>{title}</title>
     {canonicalHref && <link rel="canonical" href={canonicalHref} />}
     <slot name="head" />
+    <!-- Privacy-friendly analytics by Plausible -->
+    <link rel="preconnect" href="https://plausible.io" crossorigin />
+    <script is:inline async src="https://plausible.io/js/pa-A06OyTCULjpXq_DgGBxZp.js"></script>
+    <script is:inline>
+      window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+      plausible.init();
+      var plausibleSkipFirstPageLoad = true;
+      document.addEventListener('astro:page-load', function () {
+        if (plausibleSkipFirstPageLoad) {
+          plausibleSkipFirstPageLoad = false;
+          return;
+        }
+        if (typeof plausible === 'function') plausible('pageview');
+      });
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
