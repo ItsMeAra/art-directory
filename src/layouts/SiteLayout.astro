@@ -1,0 +1,146 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import { CATEGORIES } from '../lib/categories';
+import ThemeSwitcher from '../components/ThemeSwitcher';
+import { THEME_STORAGE_KEY } from '../lib/theme';
+import { NETLIFY_LISTING_FORM_NAME } from '../lib/netlify-listing-form';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Hidden Netlify detector form — enable on exactly one page (usually home). */
+  includeNetlifyListingDetector?: boolean;
+  githubRepoBase: string;
+}
+
+const {
+  title,
+  description = 'Hunt & Haul — a curated list of galleries, shops, and marketplaces for art and designer toys.',
+  includeNetlifyListingDetector = false,
+  githubRepoBase,
+} = Astro.props;
+
+const submitBtn =
+  'inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:focus:ring-violet-400 dark:focus:ring-offset-zinc-900';
+
+const backLink =
+  'inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:focus:ring-violet-400 dark:focus:ring-offset-zinc-900';
+
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const onSubmitPage = path === '/submit';
+---
+
+<html lang="en" transition:animate="none">
+  <head>
+    <ClientRouter />
+    <script is:inline define:vars={{ themeKey: THEME_STORAGE_KEY }}>
+      (function () {
+        function applyStoredTheme() {
+          try {
+            var t = localStorage.getItem(themeKey);
+            var dark =
+              t === 'dark' ||
+              (t !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.classList.toggle('dark', dark);
+          } catch (_) {}
+        }
+        applyStoredTheme();
+        document.addEventListener('astro:after-swap', applyStoredTheme);
+      })();
+    </script>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body class="bg-gray-50 dark:bg-zinc-950 min-h-screen font-sans text-gray-900 dark:text-zinc-100 antialiased flex flex-col">
+    {
+      includeNetlifyListingDetector && (
+        <form
+          name={NETLIFY_LISTING_FORM_NAME}
+          data-netlify="true"
+          data-netlify-honeypot="bot-field"
+          hidden
+          aria-hidden="true"
+        >
+          <input type="text" name="name" />
+          <select name="category">
+            {CATEGORIES.map(c => (
+              <option value={c.value}>{c.label}</option>
+            ))}
+          </select>
+          <input type="url" name="url" />
+          <textarea name="description" />
+          <input type="text" name="tags" />
+          <input type="text" name="location" />
+          <input type="checkbox" name="featured" value="yes" />
+          <input name="bot-field" />
+        </form>
+      )
+    }
+
+    <header
+      transition:name="site-header"
+      class="sticky top-0 z-50 shrink-0 bg-white dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-700 shadow-sm"
+    >
+      <div class="w-full px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+        <a href="/" class="flex items-center gap-2 shrink-0 min-w-0">
+          <span class="text-xl">🎨</span>
+          <span class="font-bold text-lg text-gray-900 dark:text-zinc-100 leading-none truncate">Hunt & Haul</span>
+        </a>
+        <div class="flex items-center shrink-0">
+          {
+            onSubmitPage ? (
+              <a href="/" class={backLink}>
+                ← Back to listings
+              </a>
+            ) : (
+              <a href="/submit" class={submitBtn}>
+                Submit a listing
+              </a>
+            )
+          }
+        </div>
+      </div>
+    </header>
+
+    <div
+      transition:name="main"
+      transition:animate="fade"
+      class="flex flex-1 flex-col min-h-0 min-w-0 w-full"
+    >
+      <slot />
+    </div>
+
+    <footer
+      transition:name="site-footer"
+      transition:persist
+      class="shrink-0 border-t border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900"
+    >
+      <div class="w-full mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+        <div class="text-sm text-gray-600 dark:text-zinc-400 max-w-md">
+          <p class="font-medium text-gray-900 dark:text-zinc-100">Hunt & Haul</p>
+          <p class="mt-1">
+            Curated spots to find art, designer toys, sofubi, and more to feed your obsession. Listings live in the{' '}
+            <a
+              href={githubRepoBase}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-violet-600 dark:text-violet-400 hover:underline font-medium"
+            >
+              project repo on GitHub
+            </a>
+            .
+          </p>
+        </div>
+        <ThemeSwitcher client:load />
+      </div>
+    </footer>
+  </body>
+</html>

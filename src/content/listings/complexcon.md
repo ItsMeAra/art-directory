@@ -6,10 +6,11 @@ tags:
   - designer-toys
   - limited-edition
   - pop-culture
-  - festival
+  - conference
+  - event
 url: https://complexcon.com
 description: >
-  An annual two-day festival and marketplace where brands, artists, and
+  An annual two-day conference and marketplace where brands, artists, and
   cultural icons converge to celebrate and sell exclusive drops. ComplexCon
   is the place to cop limited edition collabs, designer toys, and streetwear
   you can't find anywhere else.

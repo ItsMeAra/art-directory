@@ -14,5 +14,5 @@ description: >
   artists like Glenn Arthur, Audrey Kawasaki, and many emerging talents.
   Their online shop offers prints, originals, and artist editions.
 location: San Francisco, CA
-featured: true
+featured: false
 ---

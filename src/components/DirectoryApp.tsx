@@ -1,9 +1,12 @@
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { useState, useMemo, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import Fuse from 'fuse.js';
 import type { Listing } from '../types/listing';
 import type { CATEGORIES } from '../lib/categories';
 import { BADGE_CLASSES } from '../lib/categories';
 import ListingCard from './ListingCard';
+
+const POPULAR_TAG_LIMIT = 12;
+const MD_MIN = '(min-width: 768px)';
 
 interface DirectoryAppProps {
   listings:       Listing[];
@@ -11,18 +14,39 @@ interface DirectoryAppProps {
   categoryCounts: Record<string, number>;
 }
 
+function syncFiltersFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    category: params.get('category'),
+    tag:      params.get('tag'),
+  };
+}
+
 export default function DirectoryApp({ listings, categories, categoryCounts }: DirectoryAppProps) {
   const [searchQuery, setSearchQuery]       = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [activeTag, setActiveTag]           = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Restore category from URL on mount
+  useLayoutEffect(() => {
+    setSidebarOpen(window.matchMedia(MD_MIN).matches);
+  }, []);
+
+  const closeSidebarIfMobile = useCallback(() => {
+    if (!window.matchMedia(MD_MIN).matches) setSidebarOpen(false);
+  }, []);
+
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const cat = params.get('category');
-    if (cat) setActiveCategory(cat);
+    const read = () => {
+      const { category, tag } = syncFiltersFromUrl();
+      setActiveCategory(category);
+      setActiveTag(tag);
+    };
+    read();
+    window.addEventListener('popstate', read);
+    return () => window.removeEventListener('popstate', read);
   }, []);
 
   const handleSearchChange = (value: string) => {
@@ -31,18 +55,54 @@ export default function DirectoryApp({ listings, categories, categoryCounts }: D
     debounceTimer.current = setTimeout(() => setDebouncedQuery(value), 250);
   };
 
-  const handleCategoryChange = useCallback((category: string | null) => {
-    setActiveCategory(category);
-    setShowMobileSidebar(false);
+  const pushFilterUrl = useCallback((category: string | null, tag: string | null) => {
     const params = new URLSearchParams(window.location.search);
-    if (category) {
-      params.set('category', category);
-    } else {
-      params.delete('category');
-    }
+    if (category) params.set('category', category);
+    else params.delete('category');
+    if (tag) params.set('tag', tag);
+    else params.delete('tag');
     const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
     history.pushState(null, '', newUrl);
   }, []);
+
+  const handleCategoryChange = useCallback((category: string | null) => {
+    setActiveCategory(category);
+    closeSidebarIfMobile();
+    pushFilterUrl(category, activeTag);
+  }, [activeTag, closeSidebarIfMobile, pushFilterUrl]);
+
+  const handleTagChange = useCallback((tag: string | null) => {
+    setActiveTag(tag);
+    closeSidebarIfMobile();
+    pushFilterUrl(activeCategory, tag);
+  }, [activeCategory, closeSidebarIfMobile, pushFilterUrl]);
+
+  const handleTagToggle = useCallback((tag: string) => {
+    const next = activeTag === tag ? null : tag;
+    handleTagChange(next);
+  }, [activeTag, handleTagChange]);
+
+  const clearAllFilters = useCallback(() => {
+    setActiveCategory(null);
+    setActiveTag(null);
+    setSearchQuery('');
+    setDebouncedQuery('');
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    history.pushState(null, '', window.location.pathname);
+  }, []);
+
+  const popularTags = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const l of listings) {
+      for (const t of l.tags) {
+        counts.set(t, (counts.get(t) ?? 0) + 1);
+      }
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, POPULAR_TAG_LIMIT)
+      .map(([tag, count]) => ({ tag, count }));
+  }, [listings]);
 
   const fuse = useMemo(() => new Fuse(listings, {
     keys: [
@@ -65,70 +125,64 @@ export default function DirectoryApp({ listings, categories, categoryCounts }: D
       results = results.filter(l => l.category === activeCategory);
     }
 
+    if (activeTag) {
+      results = results.filter(l => l.tags.includes(activeTag));
+    }
+
     return results;
-  }, [debouncedQuery, activeCategory, fuse, listings]);
+  }, [debouncedQuery, activeCategory, activeTag, fuse, listings]);
 
   const totalCount = filteredListings.length;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-      {/* Search bar */}
-      <div className="mb-6 flex gap-3 items-center">
-        <div className="relative flex-1 max-w-xl">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={e => handleSearchChange(e.target.value)}
-            placeholder="Search listings..."
-            aria-label="Search listings"
-            className="block w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-          />
-        </div>
+    <div className="flex flex-1 w-full min-h-0 min-w-0">
+      <button
+        type="button"
+        tabIndex={sidebarOpen ? 0 : -1}
+        aria-hidden={!sidebarOpen}
+        className={`
+          fixed inset-0 top-16 z-40 md:hidden cursor-pointer bg-gray-900/50 dark:bg-black/60
+          motion-reduce:transition-none
+          transition-opacity duration-300 ease-out
+          ${sidebarOpen ? 'opacity-100' : 'pointer-events-none opacity-0'}
+        `}
+        aria-label="Close filters panel"
+        onClick={() => setSidebarOpen(false)}
+      />
 
-        {/* Mobile filter toggle */}
-        <button
-          onClick={() => setShowMobileSidebar(s => !s)}
-          className="md:hidden inline-flex items-center gap-2 px-3 py-2.5 text-sm font-medium border border-gray-200 rounded-lg bg-white hover:bg-gray-50"
-          aria-label="Toggle filters"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
-          </svg>
-          Filters
-          {activeCategory && (
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-violet-600 text-white text-xs">1</span>
-          )}
-        </button>
-      </div>
-
-      <div className="flex gap-8">
-        {/* Sidebar */}
-        <aside className={`
-          ${showMobileSidebar ? 'block' : 'hidden'} md:block
-          w-full md:w-56 shrink-0
-          md:sticky md:top-24 md:self-start
-        `}>
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Categories</p>
+      <aside
+        id="directory-filters"
+        {...(!sidebarOpen ? { 'aria-hidden': true as const } : {})}
+        className={`
+          flex shrink-0 flex-col bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-700
+          motion-reduce:transition-none
+          fixed z-50 left-0 top-16 bottom-0 h-[calc(100dvh-4rem)] w-64 max-w-[min(16rem,85vw)]
+          transition-[transform] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
+          md:sticky md:top-16 md:z-0 md:max-w-none md:self-start md:h-[calc(100dvh-4rem)] md:max-h-[calc(100dvh-4rem)]
+          md:transition-[width,transform,border-color] md:duration-200 md:ease-out
+          ${sidebarOpen
+            ? 'translate-x-0 border-r shadow-xl shadow-gray-900/10 dark:shadow-black/40 md:w-64 md:shadow-none'
+            : '-translate-x-full border-transparent md:translate-x-0 md:w-0 md:border-r-0 md:overflow-hidden'
+          }
+        `}
+      >
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden p-4 md:min-w-[16rem]">
+            <p className="text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-3">Categories</p>
             <nav className="flex flex-col gap-1" aria-label="Category filters">
               <button
+                type="button"
                 onClick={() => handleCategoryChange(null)}
                 aria-current={activeCategory === null ? 'true' : undefined}
                 className={`
-                  flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm text-left transition-colors
+                  cursor-pointer flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm text-left transition-colors
                   ${activeCategory === null
-                    ? 'bg-violet-50 text-violet-700 font-semibold'
-                    : 'text-gray-600 hover:bg-gray-50'
+                    ? 'bg-violet-50 text-violet-700 font-semibold dark:bg-violet-950/50 dark:text-violet-300'
+                    : 'text-gray-600 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800'
                   }
                 `}
               >
                 <span>All</span>
-                <span className={`text-xs tabular-nums ${activeCategory === null ? 'text-violet-500' : 'text-gray-400'}`}>
+                <span className={`text-xs tabular-nums ${activeCategory === null ? 'text-violet-500 dark:text-violet-400' : 'text-gray-400 dark:text-zinc-500'}`}>
                   {listings.length}
                 </span>
               </button>
@@ -136,67 +190,169 @@ export default function DirectoryApp({ listings, categories, categoryCounts }: D
               {categories.map(cat => {
                 const count = categoryCounts[cat.value] ?? 0;
                 const isActive = activeCategory === cat.value;
-                const badgeClass = BADGE_CLASSES[cat.value] ?? 'bg-gray-100 text-gray-600';
+                const badgeClass =
+                  BADGE_CLASSES[cat.value] ??
+                  'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-zinc-300';
                 return (
                   <button
+                    type="button"
                     key={cat.value}
                     onClick={() => handleCategoryChange(cat.value)}
                     aria-current={isActive ? 'true' : undefined}
                     className={`
-                      flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm text-left transition-colors
+                      cursor-pointer flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm text-left transition-colors
                       ${isActive
-                        ? 'bg-violet-50 text-violet-700 font-semibold'
-                        : 'text-gray-600 hover:bg-gray-50'
+                        ? 'bg-violet-50 text-violet-700 font-semibold dark:bg-violet-950/50 dark:text-violet-300'
+                        : 'text-gray-600 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800'
                       }
                     `}
                   >
                     <span>{cat.label}</span>
-                    <span className={`text-xs tabular-nums px-1.5 py-0.5 rounded-full ${isActive ? 'bg-violet-100 text-violet-600' : badgeClass}`}>
+                    <span className={`text-xs tabular-nums px-1.5 py-0.5 rounded-full ${isActive ? 'bg-violet-100 text-violet-600 dark:bg-violet-900/60 dark:text-violet-300' : badgeClass}`}>
                       {count}
                     </span>
                   </button>
                 );
               })}
             </nav>
-          </div>
-        </aside>
 
-        {/* Main content */}
-        <main className="flex-1 min-w-0">
-          <p className="text-sm text-gray-500 mb-4">
+            {popularTags.length > 0 && (
+              <>
+                <div className="border-t border-gray-100 dark:border-zinc-800 mt-4 pt-4" />
+                <p className="text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-3">Popular tags</p>
+                <nav className="flex flex-col gap-1" aria-label="Tag filters (toggle)">
+                  {popularTags.map(({ tag, count }) => {
+                    const isActive = activeTag === tag;
+                    const label = isActive
+                      ? `Clear tag filter “${tag}” (click again to show all listings)`
+                      : `Filter by tag “${tag}” (${count} listings)`;
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => handleTagToggle(tag)}
+                        aria-pressed={isActive}
+                        aria-label={label}
+                        className={`
+                          cursor-pointer flex items-center justify-between gap-2 w-full px-3 py-2 rounded-lg text-sm text-left transition-colors
+                          ${isActive
+                            ? 'bg-violet-50 text-violet-700 font-semibold ring-1 ring-inset ring-violet-200 dark:bg-violet-950/50 dark:text-violet-300 dark:ring-violet-800'
+                            : 'text-gray-600 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800'
+                          }
+                        `}
+                      >
+                        <span className="truncate min-w-0" title={tag}>{tag}</span>
+                        <span className="flex items-center gap-1 shrink-0">
+                          {isActive && (
+                            <span
+                              className="flex items-center justify-center w-5 h-5 rounded-full bg-violet-200/80 text-violet-700 dark:bg-violet-800/80 dark:text-violet-200 text-sm font-medium leading-none"
+                              aria-hidden
+                            >
+                              ×
+                            </span>
+                          )}
+                          <span className={`text-xs tabular-nums px-1.5 py-0.5 rounded-full ${isActive ? 'bg-violet-100 text-violet-600 dark:bg-violet-900/60 dark:text-violet-300' : 'bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-zinc-400'}`}>
+                            {count}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </>
+            )}
+        </div>
+      </aside>
+
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col py-6 px-4 sm:px-6 lg:px-8">
+        <div className="mb-6 flex flex-wrap gap-3 items-center">
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(o => !o)}
+            aria-expanded={sidebarOpen}
+            aria-controls="directory-filters"
+            aria-label={sidebarOpen ? 'Hide filters panel' : 'Show filters panel'}
+            className="cursor-pointer inline-flex shrink-0 items-center gap-2 px-3 py-2.5 text-sm font-medium border border-gray-200 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 hover:bg-gray-50 dark:hover:bg-zinc-800 dark:text-zinc-100"
+          >
+            {sidebarOpen ? (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+            )}
+            <span className="hidden sm:inline">{sidebarOpen ? 'Hide filters' : 'Show filters'}</span>
+            <span className="sm:hidden">Filters</span>
+            {(activeCategory || activeTag) && (
+              <span className="inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-violet-600 text-white text-xs tabular-nums">
+                {(activeCategory ? 1 : 0) + (activeTag ? 1 : 0)}
+              </span>
+            )}
+          </button>
+
+          <div className="relative flex-1 min-w-48 max-w-xl">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="w-4 h-4 text-gray-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={e => handleSearchChange(e.target.value)}
+              placeholder="Search listings..."
+              aria-label="Search listings"
+              className="block w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-violet-500 dark:focus:ring-violet-400 focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="text-sm text-gray-500 dark:text-zinc-400 mb-4">
             {totalCount === listings.length
               ? `${totalCount} listing${totalCount !== 1 ? 's' : ''}`
               : `${totalCount} of ${listings.length} listing${listings.length !== 1 ? 's' : ''}`
             }
             {activeCategory && (
-              <span> in <strong className="text-gray-700">{categories.find(c => c.value === activeCategory)?.label}</strong></span>
+              <span> in <strong className="text-gray-700 dark:text-zinc-200">{categories.find(c => c.value === activeCategory)?.label}</strong></span>
+            )}
+            {activeTag && (
+              <span> tagged <strong className="text-gray-700 dark:text-zinc-200">{activeTag}</strong></span>
             )}
             {debouncedQuery && (
-              <span> matching <strong className="text-gray-700">"{debouncedQuery}"</strong></span>
+              <span> matching <strong className="text-gray-700 dark:text-zinc-200">"{debouncedQuery}"</strong></span>
             )}
           </p>
 
           {filteredListings.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <span className="text-5xl mb-4">🔍</span>
-              <h2 className="text-lg font-semibold text-gray-700">No listings found</h2>
-              <p className="text-sm text-gray-400 mt-1">Try a different search or category.</p>
+              <h2 className="text-lg font-semibold text-gray-700 dark:text-zinc-200">No listings found</h2>
+              <p className="text-sm text-gray-400 dark:text-zinc-500 mt-1">Try a different search, category, or tag.</p>
               <button
-                onClick={() => { handleCategoryChange(null); handleSearchChange(''); }}
-                className="mt-4 text-sm text-violet-600 hover:underline"
+                type="button"
+                onClick={clearAllFilters}
+                className="mt-4 text-sm text-violet-600 dark:text-violet-400 hover:underline"
               >
                 Clear all filters
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {filteredListings.map(listing => (
-                <ListingCard key={listing.id} listing={listing} />
+                <ListingCard
+                  key={listing.id}
+                  listing={listing}
+                  activeTag={activeTag}
+                  onTagSelect={handleTagToggle}
+                />
               ))}
             </div>
           )}
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

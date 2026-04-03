@@ -5,7 +5,6 @@ tags:
   - designer-toys
   - retro
   - pop-culture
-  - vinyl-figures
   - reaction-figures
 url: https://super7.com
 description: >
@@ -13,5 +12,5 @@ description: >
   and pop culture. Known for their ReAction figures and ULTIMATES! line, they
   celebrate the golden age of toys with a contemporary art sensibility.
 location: San Francisco, CA + Online
-featured: true
+featured: false
 ---

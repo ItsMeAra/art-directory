@@ -1,6 +1,6 @@
 ---
 name: Medicom Toy
-category: artist-shop
+category: store
 tags:
   - bearbrick
   - designer-toys
@@ -13,5 +13,5 @@ description: >
   collectible designer toy lines in the world. Medicom collaborates with brands,
   artists, and fashion houses to produce highly sought-after limited editions.
 location: Tokyo, Japan + Online
-featured: true
+featured: false
 ---

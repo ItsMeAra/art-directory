@@ -6,7 +6,7 @@ const listings = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/listings' }),
   schema: z.object({
     name:        z.string(),
-    category:    z.enum(['gallery', 'store', 'online-marketplace', 'artist-shop', 'auction-house', 'pop-up']),
+    category:    z.enum(['gallery', 'store', 'blog', 'online-marketplace', 'artist-shop', 'auction-house', 'pop-up']),
     tags:        z.array(z.string()).default([]),
     url:         z.string().url(),
     description: z.string(),

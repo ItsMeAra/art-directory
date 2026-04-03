@@ -2,8 +2,7 @@
 import { getCollection } from 'astro:content';
 import { CATEGORIES } from '../lib/categories';
 import DirectoryApp from '../components/DirectoryApp';
-import SubmitListingHelp from '../components/SubmitListingHelp';
-import '../styles/global.css';
+import SiteLayout from '../layouts/SiteLayout.astro';
 
 const githubRepoBase =
   import.meta.env.PUBLIC_GITHUB_REPO_URL ?? 'https://github.com/ItsMeAra/art-directory';
@@ -31,34 +30,15 @@ const categoryCounts = Object.fromEntries(
 );
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="generator" content={Astro.generator} />
-    <meta name="description" content="A curated directory of places to buy art and designer toys — galleries, stores, online marketplaces, artist shops, and more." />
-    <title>Art & Toy Directory</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  </head>
-  <body class="bg-gray-50 min-h-screen font-sans text-gray-900 antialiased">
-    <header class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-        <a href="/" class="flex items-center gap-2 shrink-0 min-w-0">
-          <span class="text-xl">🎨</span>
-          <span class="font-bold text-lg text-gray-900 leading-none truncate">Art & Toy Directory</span>
-        </a>
-        <SubmitListingHelp client:load repoBase={githubRepoBase} />
-      </div>
-    </header>
-
-    <DirectoryApp
-      client:load
-      listings={listings}
-      categories={CATEGORIES}
-      categoryCounts={categoryCounts}
-    />
-  </body>
-</html>
+<SiteLayout
+  title="Hunt & Haul"
+  githubRepoBase={githubRepoBase}
+  includeNetlifyListingDetector={true}
+>
+  <DirectoryApp
+    client:load
+    listings={listings}
+    categories={CATEGORIES}
+    categoryCounts={categoryCounts}
+  />
+</SiteLayout>
