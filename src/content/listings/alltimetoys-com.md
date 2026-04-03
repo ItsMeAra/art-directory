@@ -6,6 +6,7 @@ tags:
   - collectibles
 url: https://alltimetoys.com
 description: >
-  USPS
+  Specialty toy and collectible store based in Eldersburg, MD (formerly Ellicott City), established in 2006. They sell a wide variety of new, used, and vintage toys
 featured: false
+location: Eldersburg, MD + Online
 ---
