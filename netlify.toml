@@ -5,7 +5,5 @@
 [build.environment]
   NODE_VERSION = "22"
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# No SPA-style `/* → /index.html` redirect: it intercepts POST requests and breaks Netlify Forms
+# (AJAX POST to `/` returned 404). Astro builds real routes (`/`, `/submit/`) so a catch‑all isn’t needed.
