@@ -9,6 +9,13 @@ import ListingCard from './ListingCard';
 const POPULAR_TAG_LIMIT = 12;
 const MD_MIN = '(min-width: 768px)';
 
+/** For queries at least this long, prefer literal substring matches so “dunny” doesn’t rank “Sunny” via fuzzy edit distance. */
+const SUBSTRING_PREF_MIN_QUERY_LEN = 4;
+
+function listingSearchHaystack(l: Listing): string {
+  return [l.name, l.description, ...l.tags, l.location ?? '', l.url].join(' ').toLowerCase();
+}
+
 interface DirectoryAppProps {
   listings:       Listing[];
   categories:     typeof CATEGORIES;
@@ -115,21 +122,39 @@ export default function DirectoryApp({ listings, categories, categoryCounts }: D
       .map(([tag, count]) => ({ tag, count }));
   }, [listings]);
 
-  const fuse = useMemo(() => new Fuse(listings, {
-    keys: [
-      { name: 'name',        weight: 0.5 },
-      { name: 'description', weight: 0.3 },
-      { name: 'tags',        weight: 0.2 },
-    ],
-    threshold: 0.35,
-    includeScore: true,
-  }), [listings]);
+  const fuse = useMemo(
+    () =>
+      new Fuse(listings, {
+        keys: [
+          { name: 'name',        weight: 0.42 },
+          { name: 'description', weight: 0.34 },
+          { name: 'tags',        weight: 0.14 },
+          { name: 'location',    weight: 0.05 },
+          { name: 'url',         weight: 0.05 },
+        ],
+        /** Higher = fuzzier; pairs with ignoreLocation so long descriptions still surface terms like “Dunny”. */
+        threshold:       0.32,
+        ignoreLocation:    true,
+        includeScore:      true,
+        minMatchCharLength: 2,
+      }),
+    [listings],
+  );
 
   const filteredListings = useMemo(() => {
     let results = listings;
 
     if (debouncedQuery.trim()) {
-      results = fuse.search(debouncedQuery).map(r => r.item);
+      const q        = debouncedQuery.trim();
+      const needle   = q.toLowerCase();
+      const ranked   = fuse.search(q);
+
+      if (needle.length >= SUBSTRING_PREF_MIN_QUERY_LEN) {
+        const withLiteral = ranked.filter(r => listingSearchHaystack(r.item).includes(needle));
+        results = (withLiteral.length > 0 ? withLiteral : ranked).map(r => r.item);
+      } else {
+        results = ranked.map(r => r.item);
+      }
     }
 
     if (activeCategory) {
