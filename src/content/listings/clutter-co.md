@@ -6,6 +6,6 @@ tags:
   - gallery
 url: https://clutter.co
 description: >
-  View More View More View More View More View More View More View More View More View More View More View More Browse the collection View More PRE-ORDER NOW! We are honored to work with and represent…
+  Clutter Gallery and Magazine showcases designer toys, custom figures, contemporary art, exhibitions, and exclusive collectible releases.
 featured: false
 ---
