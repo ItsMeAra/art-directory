@@ -27,12 +27,22 @@ export default function DirectoryApp({ listings, categories, categoryCounts }: D
   const [searchQuery, setSearchQuery]       = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [activeTag, setActiveTag]           = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  /** false = mobile-first; desktop opens in useLayoutEffect before first paint (avoids mobile drawer flash). */
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useLayoutEffect(() => {
     setSidebarOpen(window.matchMedia(MD_MIN).matches);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia(MD_MIN);
+    const onChange = () => {
+      setSidebarOpen(mq.matches);
+    };
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
   }, []);
 
   const closeSidebarIfMobile = useCallback(() => {
