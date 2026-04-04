@@ -10,6 +10,12 @@
 # (AJAX POST to `/` returned 404). Astro builds real routes (`/`, `/submit/`) so a catch‑all isn’t needed.
 
 [[redirects]]
+  from = "https://huntandhaul.netlify.app/*"
+  to = "https://huntandhaul.artcollector.wtf/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
   from = "/faq"
   to = "/about/"
   status = 301
