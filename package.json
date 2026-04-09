@@ -9,8 +9,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro",
-    "import-shops-csv": "node scripts/import-sofubi-shops-csv.mjs"
+    "astro": "astro"
   },
   "dependencies": {
     "@astrojs/react": "^5.0.2",
