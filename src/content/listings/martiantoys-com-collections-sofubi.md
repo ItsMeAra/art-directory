@@ -5,7 +5,7 @@ tags:
   - designer-toys
   - sofubi
   - united-states
-url: https://martiantoys.com/collections/sofubi
+url: https://martiantoys.com/
 location: "Philadelphia, PA"
 description: >
   Sofubi-friendly shop or retailer. Philadelphia, PA. Source: community
