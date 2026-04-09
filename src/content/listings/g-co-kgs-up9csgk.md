@@ -5,7 +5,7 @@ tags:
   - designer-toys
   - sofubi
   - japan
-url: https://g.co/kgs/up9CSgk
+url: https://uamou.com/collections/all
 location: "Tokyo, Ueno"
 description: >
   Sofubi-friendly shop or retailer. Tokyo, Ueno. Source: community Sofubi
