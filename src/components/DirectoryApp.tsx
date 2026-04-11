@@ -5,6 +5,10 @@ import type { CATEGORIES } from '../lib/categories';
 import { BADGE_CLASSES } from '../lib/categories';
 import { HOME_HERO } from '../lib/home-content';
 import ListingCard from './ListingCard';
+import ListingListItem from './ListingListItem';
+
+const LAYOUT_STORAGE_KEY = 'hunt-haul-directory-layout';
+type LayoutView = 'grid' | 'list';
 
 const POPULAR_TAG_LIMIT = 12;
 const MD_MIN = '(min-width: 768px)';
@@ -38,10 +42,28 @@ export default function DirectoryApp({ listings, categories, categoryCounts }: D
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [layoutView, setLayoutView] = useState<LayoutView>('grid');
 
   useLayoutEffect(() => {
     setSidebarOpen(window.matchMedia(MD_MIN).matches);
   }, []);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(LAYOUT_STORAGE_KEY);
+      if (stored === 'grid' || stored === 'list') setLayoutView(stored);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LAYOUT_STORAGE_KEY, layoutView);
+    } catch {
+      /* ignore */
+    }
+  }, [layoutView]);
 
   useEffect(() => {
     const mq = window.matchMedia(MD_MIN);
@@ -352,6 +374,53 @@ export default function DirectoryApp({ listings, categories, categoryCounts }: D
               className="block w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-violet-500 dark:focus:ring-violet-400 focus:border-transparent"
             />
           </div>
+
+          <div
+            className="flex w-full sm:w-auto sm:shrink-0 justify-end"
+            role="group"
+            aria-label="Listing layout"
+          >
+            <div className="inline-flex rounded-lg border border-gray-200 dark:border-zinc-600 p-0.5 bg-gray-50 dark:bg-zinc-800/80">
+              <button
+                type="button"
+                onClick={() => setLayoutView('grid')}
+                aria-pressed={layoutView === 'grid'}
+                aria-label="Grid layout"
+                title="Grid layout"
+                className={`
+                  cursor-pointer inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors
+                  ${layoutView === 'grid'
+                    ? 'bg-white text-violet-700 shadow-sm dark:bg-zinc-900 dark:text-violet-300'
+                    : 'text-gray-500 hover:text-gray-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                  }
+                `}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                </svg>
+                <span className="hidden sm:inline">Grid</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setLayoutView('list')}
+                aria-pressed={layoutView === 'list'}
+                aria-label="List layout"
+                title="List layout"
+                className={`
+                  cursor-pointer inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors
+                  ${layoutView === 'list'
+                    ? 'bg-white text-violet-700 shadow-sm dark:bg-zinc-900 dark:text-violet-300'
+                    : 'text-gray-500 hover:text-gray-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                  }
+                `}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h10" />
+                </svg>
+                <span className="hidden sm:inline">List</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="min-w-0 flex-1">
@@ -384,10 +453,21 @@ export default function DirectoryApp({ listings, categories, categoryCounts }: D
                 Clear all filters
               </button>
             </div>
-          ) : (
+          ) : layoutView === 'grid' ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
               {filteredListings.map(listing => (
                 <ListingCard
+                  key={listing.id}
+                  listing={listing}
+                  activeTag={activeTag}
+                  onTagSelect={handleTagToggle}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {filteredListings.map(listing => (
+                <ListingListItem
                   key={listing.id}
                   listing={listing}
                   activeTag={activeTag}
