@@ -19,6 +19,9 @@
 @theme {
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 
+  /* Extra-wide layouts (default Tailwind stops at 2xl / 96rem). */
+  --breakpoint-3xl: 120rem;
+
   --color-brand-50:  oklch(0.97 0.02 280);
   --color-brand-100: oklch(0.93 0.05 280);
   --color-brand-500: oklch(0.55 0.18 280);
