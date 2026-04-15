@@ -43,6 +43,8 @@ export default function DirectoryApp({ listings, categories, categoryCounts }: D
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [layoutView, setLayoutView] = useState<LayoutView>('grid');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [highlightedSuggestion, setHighlightedSuggestion] = useState(-1);
 
   useLayoutEffect(() => {
     setSidebarOpen(window.matchMedia(MD_MIN).matches);
@@ -189,6 +191,32 @@ export default function DirectoryApp({ listings, categories, categoryCounts }: D
 
     return results;
   }, [debouncedQuery, activeCategory, activeTag, fuse, listings]);
+
+  const searchSuggestions = useMemo(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) return [];
+    const needle = q.toLowerCase();
+
+    const literalNames = listings
+      .filter(l => l.name.toLowerCase().includes(needle))
+      .map(l => l.name);
+
+    const fuzzyNames = fuse.search(q, { limit: 12 }).map(r => r.item.name);
+    const merged = [...literalNames, ...fuzzyNames];
+    const unique = [...new Set(merged)];
+    return unique.slice(0, 8);
+  }, [searchQuery, listings, fuse]);
+
+  useEffect(() => {
+    setHighlightedSuggestion(-1);
+  }, [searchSuggestions]);
+
+  const applySuggestion = useCallback((value: string) => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    setSearchQuery(value);
+    setDebouncedQuery(value);
+    setSearchFocused(false);
+  }, []);
 
   const totalCount = filteredListings.length;
 
@@ -369,10 +397,68 @@ export default function DirectoryApp({ listings, categories, categoryCounts }: D
               type="search"
               value={searchQuery}
               onChange={e => handleSearchChange(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              onKeyDown={(e) => {
+                if (!searchSuggestions.length) return;
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault();
+                  setHighlightedSuggestion(i => Math.min(i + 1, searchSuggestions.length - 1));
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  setHighlightedSuggestion(i => Math.max(i - 1, 0));
+                } else if (e.key === 'Enter' && highlightedSuggestion >= 0) {
+                  e.preventDefault();
+                  applySuggestion(searchSuggestions[highlightedSuggestion]);
+                } else if (e.key === 'Escape') {
+                  setSearchFocused(false);
+                }
+              }}
               placeholder="Search listings..."
               aria-label="Search listings"
+              aria-autocomplete="list"
+              aria-expanded={searchFocused && searchSuggestions.length > 0}
+              aria-controls="listing-search-suggestions"
+              aria-activedescendant={
+                highlightedSuggestion >= 0
+                  ? `listing-search-suggestion-${highlightedSuggestion}`
+                  : undefined
+              }
+              role="combobox"
               className="block w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-violet-500 dark:focus:ring-violet-400 focus:border-transparent"
             />
+            {searchFocused && searchSuggestions.length > 0 && (
+              <ul
+                id="listing-search-suggestions"
+                role="listbox"
+                className="absolute left-0 right-0 z-30 mt-1 max-h-72 overflow-auto rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg"
+              >
+                {searchSuggestions.map((suggestion, idx) => {
+                  const isActive = idx === highlightedSuggestion;
+                  return (
+                    <li key={suggestion} id={`listing-search-suggestion-${idx}`} role="option" aria-selected={isActive}>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => {
+                          // Prevent input blur before click is handled.
+                          e.preventDefault();
+                          applySuggestion(suggestion);
+                        }}
+                        className={`
+                          w-full text-left px-3 py-2 text-sm transition-colors
+                          ${isActive
+                            ? 'bg-violet-50 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300'
+                            : 'text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800'
+                          }
+                        `}
+                      >
+                        {suggestion}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
 
           <div
